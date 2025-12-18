@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>🍎 Scan Result 🍎</title>
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(-45deg, #6a1b9a, #8e24aa, #d81b60, #e53935);
+      background-size: 400% 400%;
+      animation: gradientBG 10s ease infinite;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    @keyframes gradientBG {
+      0%   { background-position: 0% 50%; }
+      50%  { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .container {
+      background: #fff;
+      padding: 35px 25px;
+      border-radius: 20px;
+      text-align: center;
+      box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+      max-width: 450px;
+      width: 100%;
+      animation: fadeIn 1s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 15px;
+      font-size: 28px;
+    }
+
+    .scanned-img {
+      max-width: 220px;
+      border-radius: 15px;
+      margin: 15px 0;
+      box-shadow: 0 8px 18px rgba(0,0,0,0.2);
+    }
+
+    .info-row {
+      margin: 6px 0;
+      font-size: 16px;
+      color: #333;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: #f1f3f5;
+      color: #333;
+      margin-left: 8px;
+    }
+
+    .nutrition-card {
+      margin-top: 20px;
+      padding: 20px;
+      border-radius: 15px;
+      background: #f5f5f5;
+      text-align: left;
+      box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+      transition: 0.4s;
+    }
+
+    .nutrition-card h3 {
+      margin: 0 0 10px;
+      color: #444;
+      font-size: 20px;
+      text-align: center;
+    }
+
+    .nutrition-card ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .nutrition-card ul li {
+      margin: 8px 0;
+      font-size: 16px;
+      color: #333;
+    }
+
+    /* Faded + Pulse Animation for Rotten Items */
+    .faded-rotten {
+      opacity: 0.6;
+      background-color: #ffe5e5; /* light red */
+      pointer-events: none;
+      animation: pulseRed 3s infinite ease-in-out;
+    }
+
+    @keyframes pulseRed {
+      0% { box-shadow: 0 0 10px rgba(255, 0, 0, 0.4); }
+      50% { box-shadow: 0 0 25px rgba(255, 0, 0, 0.6); }
+      100% { box-shadow: 0 0 10px rgba(255, 0, 0, 0.4); }
+    }
+
+    /* Faded for Unripe Items */
+    .faded-unripe {
+      opacity: 0.8;
+      background-color: #fff8e1; /* light yellow */
+      border: 1px solid #ffb300;
+      pointer-events: none;
+    }
+
+    .warning {
+      padding: 12px;
+      border-radius: 10px;
+      font-size: 15px;
+      margin-top: 15px;
+      text-align: center;
+      box-shadow: 0 0 8px rgba(0,0,0,0.1);
+    }
+
+    .warning-rotten {
+      background: #e63253;
+      color: #2e2121;
+      border: 1px solid #db170d;
+    }
+
+    .warning-unripe {
+      background: #ffd54f;
+      color: #5a3e00;
+      border: 1px solid #ffb300;
+    }
+
+    a, button {
+      display: inline-block;
+      margin-top: 20px;
+      padding: 12px 20px;
+      background: #1976d2;
+      color: white;
+      text-decoration: none;
+      border-radius: 10px;
+      transition: 0.3s;
+      cursor: pointer;
+      border: none;
+      font-size: 16px;
+    }
+
+    a:hover, button:hover {
+      background: #1258a3;
+      transform: scale(1.05);
+    }
+
+    .hear-btn {
+      background: #f57c00;
+    }
+
+    .hear-btn:hover {
+      background: #ef6c00;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>✅ Scan Result</h1>
+
+    <p class="info-row"><b>Prediction:</b> {{ prediction|capitalize }}</p>
+
+    {% if ripeness %}
+      <p class="info-row">
+        <b>🍃 Ripeness:</b>
+        <span class="badge">{{ ripeness|capitalize }}</span>
+      </p>
+    {% endif %}
+
+    {% if shelf_life %}
+      <p class="info-row">
+        <b>🕒 Shelf Life:</b>
+        <span class="badge">{{ shelf_life }}</span>
+      </p>
+    {% endif %}
+
+    <img
+      src="{{ url_for('static', filename='uploads/' ~ filename) }}"
+      alt="Scanned Image"
+      class="scanned-img"
+    />
+
+    {% if ripeness and ripeness.lower() == 'rotten' %}
+      <div class="warning warning-rotten">
+        ⚠️ The item detected appears to be <b>rotten</b>. Nutritional values may vary or be inaccurate.
+      </div>
+      {% if nutrition %}
+        <div class="nutrition-card faded-rotten">
+          <h3>🍽️ Nutrition Info (per 100g)</h3>
+          <ul>
+            <li><b>Calories:</b> {{ nutrition.calories }} kcal</li>
+            <li><b>Protein:</b> {{ nutrition.protein }} g</li>
+            <li><b>Carbs:</b> {{ nutrition.carbs }} g</li>
+            <li><b>Fat:</b> {{ nutrition.fat }} g</li>
+            <li><b>Fiber:</b> {{ nutrition.fiber }} g</li>
+          </ul>
+        </div>
+      {% endif %}
+
+    {% elif ripeness and ripeness.lower() == 'unripe' %}
+      <div class="warning warning-unripe">
+        ⚠️ This item is <b>unripe</b>. Nutritional values are valid but it may not taste optimal.
+      </div>
+      {% if nutrition %}
+        <div class="nutrition-card faded-unripe">
+          <h3>🍽️ Nutrition Info (per 100g)</h3>
+          <ul>
+            <li><b>Calories:</b> {{ nutrition.calories }} kcal</li>
+            <li><b>Protein:</b> {{ nutrition.protein }} g</li>
+            <li><b>Carbs:</b> {{ nutrition.carbs }} g</li>
+            <li><b>Fat:</b> {{ nutrition.fat }} g</li>
+            <li><b>Fiber:</b> {{ nutrition.fiber }} g</li>
+          </ul>
+        </div>
+      {% endif %}
+
+    {% elif nutrition %}
+      <div class="nutrition-card">
+        <h3>🍽️ Nutrition Info (per 100g)</h3>
+        <ul>
+          <li><b>Calories:</b> {{ nutrition.calories }} kcal</li>
+          <li><b>Protein:</b> {{ nutrition.protein }} g</li>
+          <li><b>Carbs:</b> {{ nutrition.carbs }} g</li>
+          <li><b>Fat:</b> {{ nutrition.fat }} g</li>
+          <li><b>Fiber:</b> {{ nutrition.fiber }} g</li>
+        </ul>
+      </div>
+    {% else %}
+      <p>No nutrition data available for this item.</p>
+    {% endif %}
+
+    <a href="{{ url_for('dashboard') }}">🔄 Scan Another</a>
+    <button class="hear-btn" onclick="speakResult()">🔊 Hear Again</button>
+  </div>
+
+  <script>
+    const prediction = {{ prediction|tojson }};
+    const ripeness   = {{ ripeness|tojson }};
+    const shelfLife  = {{ shelf_life|tojson }};
+    const nutrition  = {{ nutrition|tojson }};
+
+    let message = "";
+
+    function generateMessage() {
+      message = `Prediction is ${prediction}.`;
+      if (ripeness)   message += ` Ripeness: ${ripeness}.`;
+      if (shelfLife)  message += ` Shelf life: ${shelfLife}.`;
+      if (nutrition) {
+        message += ` Calories ${nutrition.calories}, Protein ${nutrition.protein} grams, 
+                    Carbs ${nutrition.carbs} grams, Fat ${nutrition.fat} grams,
+                    Fiber ${nutrition.fiber} grams.`;
+      }
+    }
+
+
+    function speakResult() {
+      if (!message) generateMessage();
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.cancel();
+      }
+      const utter = new SpeechSynthesisUtterance(message);
+      utter.lang = "en-US";
+      utter.rate = 1;
+      utter.pitch = 1;
+      window.speechSynthesis.speak(utter);
+    }
+
+    window.addEventListener("load", () => {
+      generateMessage();
+      speakResult();
+    });
+  </script>
+</body>
+</html>

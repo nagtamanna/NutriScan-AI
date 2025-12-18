@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>BerryBot Admin</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css">
+</head>
+<body>
+<div class="container mt-4">
+    <h1>BerryBot Recipe Management</h1>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-secondary mb-3">Back to Admin Dashboard</a>
+
+    <!-- Add Recipe Form -->
+    <h4>Add New Recipe</h4>
+    <form action="{{ url_for('manage_berrybot') }}" method="POST" class="mb-4">
+        <div class="row g-2">
+            <div class="col-md-4">
+                <input type="text" name="fruit" class="form-control" placeholder="Fruit Name" required>
+            </div>
+            <div class="col-md-6">
+                <input type="text" name="recipe" class="form-control" placeholder="Recipe Details" required>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-success w-100">Add Recipe</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Recipe Table -->
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Fruit</th>
+                <th>Recipe</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in recipes %}
+            <tr>
+                <td>{{ r['id'] }}</td>
+                <td>{{ r['fruit'] }}</td>
+                <td>{{ r['recipe'] }}</td>
+                <td>
+                    {% if r['deleted']==0 %}
+                    <a href="{{ url_for('delete_berrybot', id=r['id']) }}" class="btn btn-sm btn-danger" onclick="return confirm('Move to Recycle Bin?')">Delete</a>
+                    {% else %}
+                    <a href="{{ url_for('restore_berrybot', id=r['id']) }}" class="btn btn-sm btn-success">Restore</a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+</body>
+</html>

@@ -1,0 +1,250 @@
+<!-- templates/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>🍎 Fruit & Veggie Scanner  🍎</title>
+
+  <!-- Main CSS -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+
+  <!-- Google Font & Favicons & Manifest -->
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Lobster+Two&display=swap" rel="stylesheet"/>
+  <link rel="icon" sizes="32x32" href="/static/images/favicon-32x32.png"/>
+  <link rel="icon" sizes="16x16" href="/static/images/favicon-16x16.png"/>
+  <link rel="shortcut icon" href="/static/images/favicon.ico"/>
+  <link rel="apple-touch-icon" href="/static/images/apple-touch-icon.png"/>
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}"/>
+
+  <!-- Service Worker Registration -->
+  <script>
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker
+        .register('{{ url_for("static", filename="sw.js") }}')
+        .then(() => console.log('SW Registered'))
+        .catch(err => console.error('SW Failed:', err));
+    }
+  </script>
+</head>
+<body>
+  <!-- Header -->
+  <header class="main-header">
+    <div class="header-container">
+      <h1 class="logo">🍎 <span>NutriScan  🥕</span></h1>
+      <nav class="header-nav">
+        {% if session.get('user_id') %}
+          <a href="{{ url_for('dashboard') }}" class="btn primary-btn">Dashboard</a>
+          <a href="{{ url_for('logout') }}"    class="btn secondary-btn">Logout</a>
+        {% else %}
+          <a href="{{ url_for('login') }}"     class="btn primary-btn">Login</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+  <!-- Top-right toggle -->
+<button id="chartToggle" class="chart-toggle">🍒</button>
+<!-- Hidden panel to host the chart -->
+<div id="produceChart" class="produce-chart-panel hidden"></div>
+<!-- Floating Fruits -->
+<div class="floating-fruit">🍌</div>
+<div class="floating-fruit">🍓</div>
+<div class="floating-fruit">🍇</div>
+<div class="floating-fruit">🍍</div>
+<div class="floating-fruit">🍉</div>
+<div class="floating-fruit">🥕</div>
+<div class="floating-fruit">🍅</div>
+<div class="floating-fruit">🥦</div>
+<div class="floating-fruit">🍒</div>
+<div class="floating-fruit">🍏</div>
+
+<style>
+  .floating-fruit {
+    position: absolute;
+    bottom: -10%; /* start below the screen */
+    opacity: 0.3; /* faded */
+    pointer-events: none;
+    animation-name: floatUp;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+  }
+
+  @keyframes floatUp {
+    0% { transform: translateY(0) rotate(0deg); }
+    100% { transform: translateY(-120vh) rotate(360deg); } /* move fully up */
+  }
+</style>
+
+<script>
+  const fruits = document.querySelectorAll('.floating-fruit');
+
+  fruits.forEach(fruit => {
+    const size = Math.random() * 1.5 + 1;         // 1-2.5rem
+    const left = Math.random() * 95;              // horizontal position 0-95%
+    const duration = Math.random() * 20 + 20;     // float speed 20-40s (slower)
+    const opacity = Math.random() * 0.3 + 0.15;   // faded 0.15-0.45
+    const delay = Math.random() * -40;            // random vertical start
+
+    fruit.style.left = `${left}%`;
+    fruit.style.fontSize = `${size}rem`;
+    fruit.style.animationDuration = `${duration}s`;
+    fruit.style.opacity = opacity;
+    fruit.style.animationDelay = `${delay}s`;
+  });
+</script>
+  <!-- Tabs Navigation -->
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="scannerTab">🔍 Scanner</button>
+    <button class="tab-btn"       data-tab="fortuneTab">🎡 Fruit Fortune</button>
+    <button class="tab-btn"       data-tab="healthyTab">🥗 Healthy Recipes</button>
+  </nav>
+
+  <!-- Scanner Panel -->
+  <section id="scannerTab" class="tab-content active">
+    <div class="container">
+      <div class="input-groups">
+        <div class="dropdown-group">
+          <button class="dropdown-toggle">
+            <span>📂 Upload</span><span class="arrow">▾</span>
+          </button>
+          <div class="dropdown-menu">
+            <form action="{{ url_for('predict') }}" method="post" enctype="multipart/form-data">
+              <input type="file" id="image-input" name="file" accept="image/*" required />
+              <button id="uploadBtn" type="submit">🚀 Upload Image</button>
+            </form>
+          </div>
+        </div>
+        <div class="dropdown-group">
+          <button class="dropdown-toggle">
+            <span>🎥 Camera</span><span class="arrow">▾</span>
+          </button>
+          <div class="dropdown-menu">
+            <select id="cameraSelect">
+              <option value="user">Front Camera</option>
+              <option value="environment">Back Camera</option>
+            </select>
+            <button id="openCamBtn" class="camera-btn" onclick="openCamera()">🔓 Open Camera</button>
+            <button id="captureBtn" class="capture-btn" onclick="captureImage()">📸 Capture</button>
+            <button id="resetCamBtn" type="button">🔄 Reset Camera</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="preview-popup" id="preview-container">
+        <div class="popup-card">
+          <div class="fruit-icon">🍑</div>
+          <p class="popup-text">No image selected yet!</p>
+          <p class="popup-sub">Choose or capture a fruit to begin</p>
+        </div>
+        <img id="preview-image" src="" alt="Preview" class="preview-img" />
+      </div>
+
+      <video id="camera" autoplay style="display:none;"></video>
+      <canvas id="canvas"></canvas>
+
+      <form id="cameraForm" action="{{ url_for('predict') }}" method="post" enctype="multipart/form-data" style="display:none;">
+        <input type="file" id="capturedImage" name="file" />
+      </form>
+    </div>
+  </section>
+
+  <!-- Fortune Panel -->
+  <section id="fortuneTab" class="tab-content">
+    <div class="fortune-spinner">
+      <h3>🍉 Spin for a Fruit Fortune!</h3>
+      <div id="fruitWheel"></div>
+      <button id="spinBtn">🎡 Spin Me!</button>
+      <div id="spinResult"></div>
+    </div>
+  </section>
+
+  <!-- Healthy Recipes Panel -->
+  <section id="healthyTab" class="tab-content">
+    <div class="container">
+      <h2 class="animated-fruity">🍓🥦 Some Simply Delicious & Healthy Recipes 🍊🥕</h2>
+
+     
+            <div class="recipes-grid">
+        <div class="recipe-card" data-tags="apple,dessert">
+          <h4>Warm Apple Crumble</h4>
+          🍎 Cinnamon-sugar baked apples
+        </div>
+        <div class="recipe-card" data-tags="banana,smoothie">
+          <h4>Banana-Oat Smoothie</h4>
+          🍌 Blend banana, oats & almond milk
+        </div>
+        <div class="recipe-card" data-tags="lemon,drink">
+          <h4>Homemade Lemonade</h4>
+          🍋 Fresh lemon & sugar water
+        </div>
+        <div class="recipe-card" data-tags="strawberry,parfait">
+          <h4>Strawberry Parfait</h4>
+          🍓 Yogurt, granola & berries
+        </div>
+        <div class="recipe-card" data-tags="mango,salsa">
+          <h4>Mango Salsa</h4>
+          🥭 Mango, onion, cilantro & lime
+        </div>
+        <div class="recipe-card" data-tags="carrot,snack">
+          <h4>Carrot Sticks & Hummus</h4>
+          🥕 Crunchy carrots with creamy hummus
+        </div>
+        <div class="recipe-card" data-tags="cucumber,hydration">
+          <h4>Cucumber Mint Cooler</h4>
+          🥒 Blend cucumber, mint & lime juice
+        </div>
+        <div class="recipe-card" data-tags="spinach,omelette">
+          <h4>Spinach-Feta Omelette</h4>
+          🥬 Eggs, spinach & feta
+        </div>
+        <div class="recipe-card" data-tags="tomato,salad">
+          <h4>Tomato Basil Salad</h4>
+          🍅 Cherry tomatoes, basil & oil
+        </div>
+        <div class="recipe-card" data-tags="sweet potato,roast">
+          <h4>Roasted Sweet Potato Cubes</h4>
+          🍠 Tossed with oil & paprika
+        </div>
+        <div class="recipe-card" data-tags="broccoli,side">
+          <h4>Garlic Roasted Broccoli</h4>
+          🥦 Oven-roasted with garlic & lemon
+        </div>
+        <div class="recipe-card" data-tags="orange,juice">
+          <h4>Fresh Orange Juice</h4>
+          🍊 Squeeze & sip vitamin C
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Loader Overlay -->
+  <div class="loader" id="loader">
+    <div class="spinner"></div>
+    <p>🤖 Thinking hard about your fruit...</p>
+  </div>
+
+  <!-- BerryBot Chat Widget -->
+  
+  <div id="berrybot-toggle" class="berrybot-toggle">
+ <span class="berrybot-label"> Bot🤖</span>
+</div>
+  <div id="berrybot-panel" class="berrybot-panel hidden">
+    <header class="berrybot-header">
+      <img src="{{ url_for('static', filename='images/berrybot-avatar.svg') }}" alt="BerryBot" />
+      <h3>BerryBot</h3>
+    </header>
+    <div id="berrybot-messages" class="berrybot-messages"></div>
+    <div class="berrybot-input">
+      <input id="berrybot-text" type="text" placeholder="Ask me a recipe…" />
+      <button id="berrybot-send">Send</button>
+    </div>
+  </div>
+
+  <!-- Voice Command Button -->
+  <button id="voice-btn" class="voice-btn">🎤 Talk to BerryBot</button>
+
+  <!-- Confetti & Main JS -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script defer src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>🍓 Fruit App Login</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet" />
+
+  <style>
+    /* --- Existing CSS --- */
+    .page.enter-right { animation: enterFromRight 0.6s ease-out forwards; }
+    .page.exit-left { animation: exitToLeft 0.4s ease-in forwards; }
+    @keyframes enterFromRight {
+      0% { transform: translateX(100%) scale(0.9); opacity:0; }
+      100% { transform: translateX(0) scale(1); opacity:1; }
+    }
+    @keyframes exitToLeft {
+      0% { transform: translateX(0) scale(1); opacity:1; }
+      100% { transform: translateX(-100%) scale(0.9); opacity:0; }
+    }
+
+    .floating-fruit {
+      position: absolute;
+      bottom: -40px;
+      opacity: 0.3;
+      pointer-events: none;
+      animation-name: floatUp;
+      animation-iteration-count: infinite;
+      animation-timing-function: linear;
+    }
+
+    @keyframes floatUp { 
+      0% { transform: translateY(0) rotate(0deg); } 
+      100% { transform: translateY(-120vh) rotate(360deg); opacity:0; } 
+    }
+
+    .blobs { position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); z-index:0; pointer-events:none; }
+    .blob-large, .blob-small { position:absolute; border-radius:50%; animation-name:blobMorph; animation-iteration-count:infinite; animation-timing-function:ease-in-out; }
+    .blob-large { width:300px; height:300px; background:rgba(255,110,199,0.2); animation-duration:12s; }
+    .blob-small { width:180px; height:180px; background:rgba(255,230,240,0.5); animation-duration:8s; }
+    @keyframes blobMorph { 0%,100% { border-radius:45% 55% 60% 40%/50% 40% 60% 50%; } 50% { border-radius:60% 40% 45% 55%/40% 60% 50% 60%; } }
+
+    .card { position: relative; z-index:2; }
+
+    :root { --pink:#ff6ec7; --purple:#6a11cb; --gray-light:#f9f9f9; --shadow:rgba(0,0,0,0.1); }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { height:100vh; display:flex; align-items:center; justify-content:center; background:linear-gradient(-45deg,var(--gray-light),#ffe0f0,var(--gray-light),#ffe0f0); background-size:400% 400%; animation:bgMove 15s ease infinite; font-family:'Inter',Arial,sans-serif; overflow:hidden; }
+    @keyframes bgMove { 0% { background-position:0 50% } 50% { background-position:100% 50% } 100% { background-position:0 50% } }
+
+    h2 { font-family:'Press Start 2P',cursive; font-size:1rem; letter-spacing:2px; background:linear-gradient(90deg,#ff6ec7,#6a11cb,#2575fc,#ff6ec7); background-size:200% 200%; -webkit-background-clip:text; -webkit-text-fill-color:transparent; animation:gradientShift 4s ease infinite,textBounce 2s ease-in-out infinite; text-align:center; margin-bottom:1.5rem; }
+    @keyframes gradientShift { 0%{background-position:0 50%}50%{background-position:100% 50%}100%{background-position:0 50%} }
+    @keyframes textBounce { 0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)} }
+
+    .form-group { position:relative; margin-bottom:1.25rem; }
+    .form-group input { width:100%; padding:.75rem 2.5rem .75rem 1rem; border:1px solid #ddd; border-radius:8px; font-size:.95rem; transition:border-color .3s,box-shadow .3s; }
+    .form-group input:focus { border-color:var(--pink); box-shadow:0 0 0 3px rgba(255,110,199,.3); outline:none; }
+    .form-group label { position:absolute; top:50%; left:1rem; transform:translateY(-50%); background:rgba(255,255,255,.9); padding:0 .25rem; color:#aaa; font-size:.85rem; pointer-events:none; transition:top .3s,font-size .3s,color .3s; }
+    .form-group input:focus+label, .form-group input:not(:placeholder-shown)+label { top:-.5rem; font-size:.75rem; color:var(--pink); }
+    .form-group .icon { position:absolute; top:50%; right:1rem; transform:translateY(-50%); font-size:1.2rem; color:#aaa; transition:color .3s,transform .3s; }
+    .form-group input:focus~.icon { color:var(--pink); transform:translateY(-50%) scale(1.2); }
+
+    /* ✅ Eye toggle inside password field */
+    .password-group input {
+      padding-right: 2.5rem; /* space for the eye */
+    }
+    .password-group .eye-toggle {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      cursor: pointer;
+      font-size: 1.1rem;
+      color: #aaa;
+      transition: transform 0.2s, color 0.2s;
+    }
+    .password-group .eye-toggle:hover {
+      transform: translateY(-50%) scale(1.2);
+      color: var(--pink);
+    }
+
+    .btn { position:relative; width:100%; padding:.75rem; background:linear-gradient(45deg,var(--pink),var(--purple)); color:#fff; font-size:1rem; border:none; border-radius:8px; cursor:pointer; overflow:hidden; transition:transform .2s; }
+    .btn:hover { transform:scale(1.03); }
+    .btn::before { content:''; position:absolute; top:50%; left:50%; width:0; height:0; background:rgba(255,255,255,.3); border-radius:50%; transform:translate(-50%,-50%); transition:width .6s ease,height .6s ease; }
+    .btn:active::before { width:200px; height:200px; transition:0s; }
+
+    .link-group { margin-top:1rem; display:flex; justify-content:space-between; font-size:.9rem; }
+    .link-group a { color:var(--pink); text-decoration:none; transition:color .2s; }
+    .link-group a:hover { color:var(--purple); }
+
+    .admin-toggle { margin-bottom:1rem; display:flex; align-items:center; font-size:.9rem; }
+    .admin-toggle input { margin-right:0.5rem; }
+
+  </style>
+</head>
+<body>
+  <div id="page" class="page">
+    <div class="floating-fruits"></div>
+    <div class="blobs">
+      <span class="blob-large"></span>
+      <span class="blob-small"></span>
+    </div>
+
+    <div class="card">
+      <h2>🍓App Login🍒</h2>
+      <form method="POST" action="/login">
+        <div class="form-group">
+          <input type="email" name="email" placeholder=" " required />
+          <label>Email</label>
+          <span class="icon">📧</span>
+        </div>
+
+        <div class="form-group password-group">
+          <input type="password" id="pwd" name="password" placeholder=" " required />
+          <label>Password</label>
+          <span class="eye-toggle" onclick="togglePassword()">👁️</span>
+        </div>
+
+        <!-- Admin toggle -->
+        <div class="admin-toggle">
+          <input type="checkbox" name="is_admin" id="is_admin">
+          <label for="is_admin">Login as Admin</label>
+        </div>
+
+        <button type="submit" class="btn">Login</button>
+      </form>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, msg in messages %}
+            <p class="{{ category }}">{{ msg }}</p>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+
+      <div class="link-group">
+        <a href="{{ url_for('signup') }}">Create Account</a>
+        <a href="{{ url_for('forgot_password') }}">Forgot Password?</a>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Floating fruits
+    document.addEventListener('DOMContentLoaded', () => {
+      const fruits = ['🍓','🍇','🍌','🍍','🍉','🍒','🥕','🥦','🍅','🍑','🍋','🥬','🌽','🥒','🍈','🍐','🍠','🥭','🍊','🍏'];
+      const container = document.querySelector('.floating-fruits');
+      fruits.forEach(icon => {
+        const span = document.createElement('span');
+        span.className = 'floating-fruit';
+        span.textContent = icon;
+        container.appendChild(span);
+      });
+      document.querySelectorAll('.floating-fruit').forEach(el => {
+        const dur = Math.random()*8+12; // slow float
+        el.style.left = Math.random()*100+'%';
+        el.style.fontSize = (Math.random()*1+0.8)+'rem';
+        el.style.opacity = Math.random()*0.4+0.2; // more faded
+        el.style.animationDuration = dur+'s';
+        el.style.animationDelay = '0s'; // no delay
+      });
+    });
+
+    // Show/hide password
+    function togglePassword() {
+      const pwd = document.getElementById('pwd');
+      const eye = document.querySelector('.eye-toggle');
+      if (pwd.type === "password") {
+        pwd.type = "text";
+        eye.textContent = "🙈";
+      } else {
+        pwd.type = "password";
+        eye.textContent = "👁️";
+      }
+    }
+
+    // Page animation transitions
+    (function(){
+      const page = document.getElementById('page');
+      document.querySelectorAll('form, .link-group a').forEach(el => {
+        const isForm = el.tagName === 'FORM';
+        el.addEventListener(isForm ? 'submit' : 'click', function(e) {
+          e.preventDefault();
+          page.classList.replace('enter-right','exit-left');
+          setTimeout(() => {
+            if (isForm) this.submit();
+            else window.location = this.href;
+          }, 400);
+        });
+      });
+    })();
+  </script>
+</body>
+</html>

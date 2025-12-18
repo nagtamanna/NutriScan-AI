@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Recycle Bin</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { padding: 18px; }
+    .actions a { margin-right: 6px; }
+    .small-muted { color: #6c757d; font-size: .9rem; }
+  </style>
+</head>
+<body>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2>Recycle Bin</h2>
+  <div>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn btn-outline-primary me-2">Back to Dashboard</a>
+    <a href="{{ url_for('logout') }}" class="btn btn-danger">Logout</a>
+  </div>
+</div>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category,message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+<h4>Deleted Users <span class="small-muted">({{ deleted_users|length }})</span></h4>
+<div class="table-responsive mb-4">
+  <table class="table table-bordered">
+    <thead><tr><th>ID</th><th>Username</th><th>Email</th><th>Actions</th></tr></thead>
+    <tbody>
+      {% for user in deleted_users %}
+      <tr>
+        <td>{{ user['id'] }}</td>
+        <td>{{ user['username'] }}</td>
+        <td>{{ user['email'] }}</td>
+        <td class="actions">
+          <a href="{{ url_for('restore_user', user_id=user['id']) }}" class="btn btn-sm btn-success">Restore</a>
+          <a href="{{ url_for('permanent_delete_user', user_id=user['id']) }}" class="btn btn-sm btn-danger" onclick="return confirm('Permanently delete this user?')">Delete Forever</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="4" class="text-center small-muted">No deleted users.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<h4>Deleted Nutrition Items <span class="small-muted">({{ deleted_nutrition|length }})</span></h4>
+<div class="table-responsive">
+  <table class="table table-bordered">
+    <thead>
+      <tr>
+        <th>ID</th><th>Name</th><th>Category</th><th>Calories</th>
+        <th>Protein</th><th>Fat</th><th>Carbs</th><th>Fiber</th><th>Shelf Life</th><th>Condition</th><th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in deleted_nutrition %}
+      <tr>
+        <td>{{ item['id'] }}</td>
+        <td>{{ item['name'] }}</td>
+        <td>{{ item['category'] or 'Unknown' }}</td>
+        <td>{{ item['calories'] }}</td>
+        <td>{{ item['protein'] }}</td>
+        <td>{{ item['fat'] }}</td>
+        <td>{{ item['carbs'] }}</td>
+        <td>{{ item['fiber'] }}</td>
+        <td>{{ item['shelf_life'] or '-' }}</td>
+        <td>{{ item['condition'] or '-' }}</td>
+        <td class="actions">
+          <a href="{{ url_for('restore_nutrition', item_id=item['id']) }}" class="btn btn-sm btn-success">Restore</a>
+          <a href="{{ url_for('permanent_delete_nutrition', item_id=item['id']) }}" class="btn btn-sm btn-danger" onclick="return confirm('Permanently delete this item?')">Delete Forever</a>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="11" class="text-center small-muted">No deleted nutrition items.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
